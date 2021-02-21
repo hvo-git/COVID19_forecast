@@ -1,22 +1,42 @@
 """The App."""
-#pipreqs to get requirements file
+
+#import os
 
 from matplotlib import pyplot as plt
 from fbprophet import Prophet
 from fbprophet.plot import plot_plotly
 
 import streamlit as st  # pylint: disable=import-error
+import pandas as pd
+
 #from load_data import load_data
 
-FILEPATH = "https://raw.githubusercontent.com/hvo-git/COVID19_forecast/main/data.json"
+FILEPATH = "https://raw.githubusercontent.com/hvo-git/COVID19_forecast/main/data.json" # #r"Z:\Forecast\app\data.json"#
 
 ALL = "All Cumulaive Series - No Forecast"
 CASES = "Cumulative Cases"
 DEATHS = "Cumulative Deaths"
 RECOVERIES = "Cumulative Recoveries"
+@st.cache
+def load_data(path):
+    """Loads the dataset from a filepath."""
+    return (
+        pd.read_json(path)
+        .rename(
+            columns={
+                "Total Results as of Date": "date",
+                "Cases": "cumulative_cases",
+                "Deaths": "cumulative_deaths",
+                "Recovered": "cumulative_recoveries",
+            }
+        )
+        .assign(date=lambda df: pd.to_datetime(df["date"]))
+        .set_index("date")
+    )
+
+@st.cache(allow_output_mutation=True)
 
 
-#@st.cache(allow_output_mutation=True)
 def make_forecast(selection):
     """Takes a name from the selection and makes a forecast plot."""
 
@@ -59,40 +79,29 @@ def make_forecast(selection):
 
     return fig
 
-import pandas as pd
-#import streamlit as st  # pylint: disable=import-error
-@st.cache
-def load_data(path):
-    """Loads the dataset from a filepath."""
-    return (
-        pd.read_json(path)
-        .rename(
-            columns={
-                "Total Results as of Date": "date",
-                "Cases": "cumulative_cases",
-                "Deaths": "cumulative_deaths",
-                "Recovered": "cumulative_recoveries",
-            }
-        )
-        .assign(date=lambda df: pd.to_datetime(df["date"]))
-        .set_index("date")
-    )
 
 df = load_data(FILEPATH)
 st.write("# COVID Forecast")
 
-#selected_series = st.selectbox("Select a data set:", (ALL, CASES, DEATHS, RECOVERIES))
+selected_series = st.selectbox("Select a data set:", (ALL, CASES, DEATHS, RECOVERIES))
 
-cases_series = df["cumulative_cases"]
-deaths_series = df["cumulative_deaths"]
-recoveries_series = df["cumulative_recoveries"]
+if selected_series == ALL:
+    st.set_option('deprecation.showPyplotGlobalUse', False)
+    cases_series = df["cumulative_cases"]
+    deaths_series = df["cumulative_deaths"]
+    recoveries_series = df["cumulative_recoveries"]
 
-plt.title("Global Cumulative Series")
-plt.xlabel("Date")
-plt.ylabel("Cases")
-plt.plot(cases_series.index, cases_series.values, label=CASES)
-plt.plot(deaths_series.index, deaths_series.values, label=DEATHS)
-plt.plot(recoveries_series.index, recoveries_series.values, label=RECOVERIES)
-plt.legend()
+    plt.title("Global Cumulative Series")
+    plt.xlabel("Date")
+    plt.ylabel("Cases")
+    plt.plot(cases_series.index, cases_series.values, label=CASES)
+    plt.plot(deaths_series.index, deaths_series.values, label=DEATHS)
+    plt.plot(recoveries_series.index, recoveries_series.values, label=RECOVERIES)
+    plt.legend()
 
-plt.show()
+    st.pyplot()
+
+
+else:
+    plotly_fig = make_forecast(selected_series)
+    st.plotly_chart(plotly_fig)
