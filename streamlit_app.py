@@ -8,7 +8,7 @@ from fbprophet.plot import plot_plotly
 import streamlit as st  # pylint: disable=import-error
 #from load_data import load_data
 
-FILEPATH = "https://github.com/hvo-git/COVID19_forecast/blob/main/data.json"#r"Z:\Forecast\app\data.json"
+FILEPATH = "https://raw.githubusercontent.com/hvo-git/COVID19_forecast/main/data.json"
 
 ALL = "All Cumulaive Series - No Forecast"
 CASES = "Cumulative Cases"
